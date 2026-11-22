@@ -1,0 +1,13 @@
+[package]
+name = "dp-test-support"
+description = "Test helpers: mock platform, mock Claude server, fixtures. Never shipped."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true

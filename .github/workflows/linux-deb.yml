@@ -1,0 +1,62 @@
+# Builds the Linux .deb packages (amd64 and arm64) with packaging/linux/build-deb.sh.
+#
+# Runs when started by hand (Actions ▸ Linux .deb ▸ Run workflow) or when a version tag
+# such as v0.1.0 is pushed. The packages are attached to the run as artifacts; for a
+# tag they are also added to the GitHub release of that tag.
+name: Linux .deb
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # only used to attach the packages to a tag's release
+
+jobs:
+  deb:
+    name: deb (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: amd64, runner: ubuntu-22.04 }
+          # Native ARM runner (free for public repositories).
+          - { arch: arm64, runner: ubuntu-22.04-arm }
+    # Ubuntu 22.04: packages built here also install on newer Ubuntu and Debian 12.
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake clang pkg-config dpkg-dev \
+            libasound2-dev libxkbcommon-dev libxcb1-dev libwayland-dev libgl1-mesa-dev
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: deb-${{ matrix.arch }}
+      - name: Architecture rules
+        run: cargo xtask check-deps
+      - name: Build the package
+        run: packaging/linux/build-deb.sh
+      - name: Check the package
+        run: |
+          deb=$(ls target/deb/*.deb)
+          dpkg-deb --info "$deb"
+          dpkg-deb --contents "$deb"
+          # Installs and starts far enough to print its version.
+          sudo apt-get install -y "./$deb"
+          desktop-pilot --version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-pilot-deb-${{ matrix.arch }}
+          path: target/deb/*.deb
+          if-no-files-found: error
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+          gh release upload "$GITHUB_REF_NAME" target/deb/*.deb --clobber

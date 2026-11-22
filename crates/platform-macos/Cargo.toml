@@ -1,0 +1,24 @@
+[package]
+name = "dp-platform-macos"
+description = "macOS implementation of the platform traits."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+async-trait.workspace = true
+block2.workspace = true
+dp-platform.workspace = true
+global-hotkey.workspace = true
+objc2.workspace = true
+objc2-app-kit.workspace = true
+objc2-core-foundation.workspace = true
+objc2-core-graphics.workspace = true
+objc2-foundation.workspace = true
+objc2-screen-capture-kit.workspace = true
+os_info.workspace = true
+
+[lints]
+workspace = true

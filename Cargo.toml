@@ -1,0 +1,148 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/app",
+    "crates/core",
+    "crates/llm",
+    "crates/platform",
+    "crates/platform-windows",
+    "crates/platform-macos",
+    "crates/platform-linux",
+    "crates/tools",
+    "crates/voice",
+    "crates/config",
+    "crates/test-support",
+    "xtask",
+]
+default-members = ["crates/app"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+license = "LicenseRef-Proprietary"
+publish = false
+
+# Add an entry here when a crate first uses it (cargo warns about unused entries).
+# External crates: latest stable at the time they are added, docs checked then.
+# Versions below verified on crates.io on 2026-11-16.
+[workspace.dependencies]
+# Internal crates (dp-tools, dp-test-support join as they get used)
+dp-config = { path = "crates/config" }
+dp-core = { path = "crates/core" }
+dp-llm = { path = "crates/llm" }
+dp-platform = { path = "crates/platform" }
+dp-platform-windows = { path = "crates/platform-windows" }
+dp-platform-macos = { path = "crates/platform-macos" }
+dp-platform-linux = { path = "crates/platform-linux" }
+dp-voice = { path = "crates/voice" }
+
+# External crates
+anyhow = "1.0.104"
+async-trait = "0.1.92"
+# Local MCP endpoint inside the GUI (127.0.0.1 only).
+axum = { version = "0.8.9", default-features = false, features = ["http1", "json", "tokio"] }
+# GUI (ADR-001). glow (OpenGL) renderer instead of the default wgpu: smaller binary, faster build.
+eframe = { version = "0.37.0", default-features = false, features = [
+    "accesskit",
+    "clipboard",
+    "default_fonts",
+    "glow",
+    "wayland",
+    "x11",
+] }
+base64 = "0.23.1"
+# Voice assistant (dp-voice): microphone capture and local Whisper speech-to-text.
+cpal = "0.18.2"
+whisper-rs = "0.16.0"
+sha2 = "0.11.1"
+# Global hotkeys on macOS (TRD §2: `global-hotkey`, Carbon RegisterEventHotKey).
+global-hotkey = "0.10.0"
+# Tray / menu-bar icon (ADR-001); menus via its `muda` re-export.
+tray-icon = "0.26.1"
+# macOS bindings (platform-macos only). Same versions eframe/winit already pull in.
+block2 = "0.6.2"
+objc2 = "0.6.5"
+objc2-app-kit = { version = "0.3.2", default-features = false, features = [
+    "std",
+    "NSApplication",
+    "NSResponder",
+    "NSScreen",
+    "NSWindow",
+] }
+objc2-core-foundation = { version = "0.3.2", default-features = false, features = ["std", "CFCGTypes"] }
+objc2-core-graphics = { version = "0.3.2", default-features = false, features = [
+    "std",
+    "CGBitmapContext",
+    "CGColorSpace",
+    "CGContext",
+    "CGDirectDisplay",
+    "CGError",
+    "CGEvent",
+    "CGEventSource",
+    "CGEventTypes",
+    "CGImage",
+    "CGRemoteOperation",
+    "CGWindow",
+] }
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSArray", "NSError", "NSString"] }
+objc2-screen-capture-kit = { version = "0.3.2", default-features = false, features = [
+    "std",
+    "block2",
+    "libc",
+    "objc2-core-foundation",
+    "objc2-core-graphics",
+    "SCScreenshotManager",
+    "SCShareableContent",
+    "SCStream",
+] }
+directories = "6.0.0"
+futures-util = { version = "0.3.34", default-features = false, features = ["std"] }
+image = { version = "0.25.10", default-features = false, features = ["png"] }
+os_info = { version = "3.15.0", default-features = false }
+# rustls TLS (TRD §2.3: no OpenSSL). Default `rustls` feature = aws-lc-rs provider.
+reqwest = { version = "0.13.5", default-features = false, features = [
+    "rustls",
+    "http2",
+    "json",
+    "stream",
+    "system-proxy",
+] }
+secrecy = "0.10.3"
+serde = { version = "1.0.229", features = ["derive"] }
+# preserve_order: replay content blocks with their original key order (ADR-006).
+serde_json = { version = "1.0.154", features = ["preserve_order"] }
+thiserror = "2.0.21"
+tokio = { version = "1.54.1", features = ["rt-multi-thread", "sync", "time", "macros", "process", "io-util", "io-std"] }
+tokio-util = "0.7.20"
+toml = "1.2.1"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+windows = { version = "0.62.2", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_Security",
+    "Win32_Security_Credentials",
+    "Win32_System_Threading",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[workspace.lints.rust]
+missing_debug_implementations = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+unreachable_pub = "warn"
+
+[workspace.lints.clippy]
+dbg_macro = "warn"
+todo = "warn"
+undocumented_unsafe_blocks = "warn"
+unwrap_used = "warn"
+print_stdout = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+panic = "unwind"

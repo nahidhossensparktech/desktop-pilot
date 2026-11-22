@@ -1,0 +1,15 @@
+[package]
+name = "dp-platform-linux"
+description = "Linux implementation of the platform traits (X11 and Wayland)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+dp-platform.workspace = true
+os_info.workspace = true
+
+[lints]
+workspace = true

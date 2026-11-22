@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
+
+jobs:
+  lint:
+    name: Lint (fmt, deny, dependency rules)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # rust-toolchain.toml pins the toolchain; rustup installs it on first use.
+      - run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@v2
+      - name: rustfmt
+        run: cargo fmt --all -- --check
+      - name: Dependency rules
+        run: cargo xtask check-deps
+      - name: cargo-deny
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+
+  test:
+    name: Test (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: windows, os: windows-latest }
+          - { name: macos-arm64, os: macos-latest }
+          - { name: linux-x11, os: ubuntu-latest }
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@v2
+      - name: Linux GUI build dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libxcb1-dev libwayland-dev libgl1-mesa-dev libasound2-dev cmake clang
+      # Clippy runs on every OS because each OS compiles different cfg(target_os) code.
+      - name: clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: test
+        run: cargo test --workspace --locked
+      - name: Smoke test the binary
+        run: |
+          cargo run --locked -p desktop-pilot -- --version
+          cargo run --locked -p desktop-pilot -- --capabilities
+
+  linux-x11-session:
+    name: Smoke (Linux X11 session via Xvfb)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: Swatinem/rust-cache@v2
+      - run: sudo apt-get update && sudo apt-get install -y xvfb libxkbcommon-dev libxcb1-dev libwayland-dev libgl1-mesa-dev libasound2-dev cmake clang
+      - name: Detects X11
+        run: |
+          cargo build --locked -p desktop-pilot
+          Xvfb :99 -screen 0 1920x1080x24 &
+          sleep 2
+          out=$(DISPLAY=:99 XDG_SESSION_TYPE=x11 ./target/debug/desktop-pilot --version)
+          echo "$out"
+          echo "$out" | grep -q "session=x11"
+
+  linux-wayland-session:
+    name: Smoke (Linux Wayland session, headless weston) [prototype]
+    runs-on: ubuntu-latest
+    # Prototype until M2 proves a headless compositor + portals in CI (TEST_PLAN §4.1).
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: Swatinem/rust-cache@v2
+      - run: sudo apt-get update && sudo apt-get install -y weston libxkbcommon-dev libxcb1-dev libwayland-dev libgl1-mesa-dev libasound2-dev cmake clang
+      - name: Detects Wayland
+        run: |
+          cargo build --locked -p desktop-pilot
+          export XDG_RUNTIME_DIR=$(mktemp -d) && chmod 700 "$XDG_RUNTIME_DIR"
+          weston --backend=headless --socket=wayland-dp &
+          sleep 3
+          out=$(WAYLAND_DISPLAY=wayland-dp XDG_SESSION_TYPE=wayland ./target/debug/desktop-pilot --version)
+          echo "$out"
+          echo "$out" | grep -q "session=wayland"
+
+  msrv:
+    name: MSRV (1.95)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup toolchain install 1.95 --profile minimal
+      - uses: Swatinem/rust-cache@v2
+      - run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libxcb1-dev libwayland-dev libgl1-mesa-dev libasound2-dev cmake clang
+      - run: cargo +1.95 build --workspace --locked

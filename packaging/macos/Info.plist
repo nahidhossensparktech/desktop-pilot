@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Desktop Pilot</string>
+    <key>CFBundleDisplayName</key>
+    <string>Desktop Pilot</string>
+    <!-- Must never change: it is also the permission (TCC) identity and matches the
+         settings folder (dp-config QUALIFIER/ORGANIZATION/APPLICATION, TRD TR-M10). -->
+    <key>CFBundleIdentifier</key>
+    <string>com.desktoppilot.DesktopPilot</string>
+    <key>CFBundleExecutable</key>
+    <string>desktop-pilot</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>__VERSION__</string>
+    <key>CFBundleVersion</key>
+    <string>__VERSION__</string>
+    <!-- Screen capture uses ScreenCaptureKit's screenshot API (macOS 14+). -->
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.productivity</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+    <!-- Required: without it macOS ends the app when the voice assistant opens the mic. -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Desktop Pilot listens for your voice commands. Speech is recognized on this Mac; audio is never saved or sent.</string>
+</dict>
+</plist>

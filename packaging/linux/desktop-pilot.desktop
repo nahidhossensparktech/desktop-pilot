@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Desktop Pilot
+GenericName=AI desktop assistant
+Comment=Control your computer with natural language and your voice, powered by Claude
+Exec=desktop-pilot
+Icon=desktop-pilot
+Terminal=false
+Categories=Utility;Accessibility;
+Keywords=AI;assistant;voice;Claude;automation;
+StartupWMClass=desktop-pilot

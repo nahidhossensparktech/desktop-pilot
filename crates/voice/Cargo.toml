@@ -1,0 +1,24 @@
+[package]
+name = "dp-voice"
+description = "Voice assistant: microphone, speech detection, wake phrase and local Whisper speech-to-text."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+cpal.workspace = true
+reqwest.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["fs"] }
+tracing.workspace = true
+whisper-rs = { workspace = true, features = ["tracing_backend"] }
+
+# GPU (Metal) transcription on macOS; CPU elsewhere.
+[target.'cfg(target_os = "macos")'.dependencies]
+whisper-rs = { workspace = true, features = ["metal", "tracing_backend"] }
+
+[lints]
+workspace = true
