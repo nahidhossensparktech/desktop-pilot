@@ -38,7 +38,7 @@ jobs:
       - name: Architecture rules
         run: cargo xtask check-deps
       - name: Build the package
-        run: packaging/linux/build-deb.sh
+        run: bash packaging/linux/build-deb.sh
       - name: Check the package
         run: |
           deb=$(ls target/deb/*.deb)
